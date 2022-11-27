@@ -7,3 +7,4 @@
 - [Generics expansion](2-generics.md)
 - [Desugaring jinko's multi-types](3-multi-types.md)
 - [Error handling inside the interpreter](4-error-handling-inside-the-interpreter.md)
+- [New internal representation](6-new-internal-representation.md)
