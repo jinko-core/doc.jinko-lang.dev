@@ -36,7 +36,7 @@ hint: no specialization exists for function `fmt` for type `func(int) -> int`
 
 hint: consider specializing the function
 
-  5 | func fmt[fn(int) -> int](value: func(int) -> int) -> string { /* TODO */ }
+  5 | func fmt[T: func(int) -> int](value: func(int) -> int) -> string { /* TODO */ }
 ```
 
 As a side note, we could also consider using a similar syntax for [generic specialization](#generic-specialization).
@@ -104,50 +104,3 @@ func curry[T, U, Z](f: func(T, U) -> Z) -> func(T) -> func(U) -> Z {
 
 Or have `curry` as an interpreter builtin? But then it contradicts with the goal of having the interpreter be as small
 and simple as possible.
-
-#### Generic Specialization
-
-```rust
-func fmt[T](value: T) -> string;
-
-type Marker;
-
-// ?
-func fmt[T](value: T) -> string where T <- Marker {
-    "Marker"
-}
-
-func fmt[T <- Marker](value: Marker) -> string {
-    "Marker"
-}
-
-type Nothing;
-type Maybe[T](inner: T | Nothing);
-
-func fmt[T <- Maybe[T]](value: Maybe[T]) -> string {
-    switch value.inner {
-        contained: T => "{contained}",
-        _: Nothing => "Nothing"
-    }
-}
-```
-
-This could also lead to partial application of generics!
-
-```rust
-func map[T, U](value: T, fn: func(T) -> U) -> U {
-    fn(value)
-}
-
-func map[T <- Vector[T], U <- Vector[U]](vec: Vector[T], fn: func(T) -> U) -> Vector[U] {
-    vec.iter().map(|value| map(value, fn)).to_vector()
-}
-
-// Transform a Maybe[int] into something or panic
-func map[T <- Maybe[int], U](opt: Maybe[int], fn: func(int) -> U) -> U {
-    switch opt {
-        value: int => fn(value)
-        _: Nothing => panic()
-    }
-}
-```
