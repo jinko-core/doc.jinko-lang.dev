@@ -14,7 +14,7 @@ fn emit[T](err: Error[T]) {
 }
 
 // Specialization for the default implementation
-fn emit[string](err: Error[string]) {
+fn emit[T: string](err: Error[string]) {
     println_err(err.from)
 }
 ```
@@ -85,8 +85,8 @@ need to rely on interpreter magic to propagate errors properly.
 
 func try[T, E](result: Result[T, E]) -> T {
     switch result {
-	  ok: Ok => ok.get(),
-	  err: Error => Jinko.caller().return_with(err), // return *from* the caller
+    	  ok: Ok => ok.get(),
+    	  err: Error => Jinko.caller().return_with(err), // return *from* the caller
     }
 }
 

@@ -118,14 +118,14 @@ How would the syntax for specifying the generic type `T` to be `File` look like?
 
 One proposal is as follows
 ```rust
-func rot[T = File](f: File) {
+func rot[T: File](f: File) {
     f.close()
 }
 ```
 
 This syntax is nice, but does not really allow partial specialization. We could want something like this `rot` function for vectors or tuples
 ```rust
-func rot[T = Vector[T]](v: Vector[T]) {
+func rot[T: Vector[T]](v: Vector[T]) {
     for value in v {
         value.rot()
     }  
@@ -136,11 +136,11 @@ func rot[T = Vector[T]](v: Vector[T]) {
 Having an implicit rule for reusing the same generics does not work really well and could get confusing
 ```rust
 // what is the difference between
-func rot[T = Vector[T]](v: Vector[T]);
+func rot[T: Vector[T]](v: Vector[T]);
 // and
-func rot[T = Vector[int]](v: Vector[int]);
+func rot[T: Vector[int]](v: Vector[int]);
 // and
-func rot[T = Vector[undeclared_type]](v: Vector[undeclared_type]);
+func rot[T: Vector[undeclared_type]](v: Vector[undeclared_type]);
 // which one should error out?
 ```
 
@@ -199,12 +199,12 @@ func rot[T](value: T)[Vector[int]] {}
 Or we could have entirely different partial function specialization syntax, which could mean "returns a function specializable on a generic `U`"
 
 ```rust
-func rot[T = Vec[U]](value: Vec[U]): [U] {
+func rot[T: Vec[U]](value: Vec[U]): [U] {
     
 }
 
 // gets a bit uglier here...
-func id[T = Vector[U]](value: Vector[U]): [U] -> Vector[U] {
+func id[T: Vector[U]](value: Vector[U]): [U] -> Vector[U] {
     value
 }
 ```
@@ -236,6 +236,14 @@ func rot[U](value: U) {}
 
 which is probably the better solution :)
 
+Alternatively, we can also keep generics and add new generics to partially specialized functions:
+
+```rust
+func rot[T](value: T) {}
+func rot[T: File](value: File) { value.close() }
+func rot[I, T: Vector[I]](value: Vector[I]) { for value in values { value.rot() } }
+```
+
 Let's take a look at a few examples where partial generic application and specialization become useful:
 
 ```rust
@@ -243,27 +251,27 @@ Let's take a look at a few examples where partial generic application and specia
 func format[T](value: T) -> string;
 
 // specialization for the primitive types
-func format(value: int) -> string {
+func format[T: int](value: int) -> string {
     format_int(value)
 }
 
-func format(value: bool) -> string {
+func format[T: bool](value: bool) -> string {
     switch value {
-    true => "true",
-    false => "false",
+        true => "true",
+        false => "false",
     }
 }
 
-func format(value: char) -> string {
+func format[T: char](value: char) -> string {
     "".concat(value)
 }
 
-func format(value: string) -> string {
+func format[T: string](value: string) -> string {
     value
 }
 ```
 
-The one thing sticking out to me is that the specialized versions of `format` look just like regular functions. There is no indication (syntactically) that they are specialized functions. So for example why would this
+If we omit the binding syntax (`T: whatever`), the one thing sticking out to me is that the specialized versions of `format` look just like regular functions. There is no indication (syntactically) that they are specialized functions. So for example why would this
 error out
 
 ```rust
@@ -302,8 +310,8 @@ spec map[T, U](values: Vector[T], f: func(T) -> U) -> Vector[U] {
 func fold[In, Out, Elt](
     values: In,
     init: Out,
-    folder: func(Out, Elt) -> Out)
--> Out {
+    folder: func(Out, Elt) -> Out
+) -> Out {
     where mut output = init;
     for elt in values {
         output = folder(output, elt)
@@ -313,4 +321,48 @@ func fold[In, Out, Elt](
 }
 ```
 
-How to prevent overzealous specialization? For example, specializing `map` on `int` and `string` would not be great. Could it affect users of a library?
+How to prevent overzealous specialization? For example, specializing `map` on `int` and `char` would not be great. Could it affect users of a library? Should we really disallow it?
+
+```rust
+func format[T](value: T) -> string;
+func format[T: string](value: string) -> string { value }
+func format[T: int](value: int) -> int { format_int(value) }
+func format[T: bool](value: bool) -> int {
+    switch value {
+        true => "true",
+        false => "false",
+    }
+}
+
+func map[T, U](value: T, f: func(T) -> U) -> U {
+    f(value)
+}
+
+// isn't this a bit confusing...
+func map[I, O, T: Maybe[I], U: Maybe[O]](value: Maybe[I], f: func(I) -> O) -> Maybe[O] {
+    switch value {
+        input: I => f(input),
+        Nothing => Nothing,
+    }
+}
+
+// should we go for this instead? yes
+func map[I, O][T: Maybe[I], U: Maybe[O]](value: Maybe[I], f: func(I) -> O) -> Maybe[O] { /* ... */ }
+func map[I, O](T: Vector[I], U: Vector[O])(
+    values: Vector[I],
+    f: func(I) -> O
+) -> Vector[O] {
+    values.fold(Vector, (vec, elt) -> vec.push(f(elt)))
+}
+
+func fold[In, Out, Elt](
+    values: In,
+    init: Out,
+    folder: func(Out, Elt) -> Out,
+) -> Out {
+    where mut output = init;
+    values.iter().for_each(elt -> { output = folder(output, elt) });
+
+    output
+}
+```
