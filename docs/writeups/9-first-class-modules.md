@@ -71,8 +71,7 @@ which we can use like so:
 ```rust
 // main.jk
 
-where l = utils[Left](inner: 156);
-where value: utils[Either] = l;
+where value: utils[Either] = utils[Left](inner: 156);
 
 utils.is_left(value);
 ```
@@ -103,8 +102,7 @@ which we can use like so:
 ```rust
 // main.jk
 
-where l = utils.Left(inner: 156);
-where value: utils.Either = l;
+where value: utils.Either = utils.Left(inner: 156);
 
 utils.is_left(value);
 ```
@@ -112,3 +110,6 @@ utils.is_left(value);
 * Problems with this solution
     * Requires self referential types (`utils.is_left` is of type `func[L, R](utils.Either[L, R]) -> bool`)
     * Requires first class type support
+    * How to instantiate a `utils.Either` when we only know it's a type and not more?
+        * Runtime type information?
+        * How to compile that?
