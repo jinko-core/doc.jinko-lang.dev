@@ -10,7 +10,7 @@ The idea solution would be something centered around types - but how, and which 
 
 ## Extensible `Shell` type
 
-By having a base generic `Shell` type which has a couple methods, such as `arg(string)`, we can abstract almost all shell command building functionality before executing said command. It probably needs a couple more methods to enable piping functionality and redirection.
+By having a base generic `Shell` type which has a couple methods, such as `.arg()` and `.execute()`, we can abstract almost all shell command building functionality before executing said command. It probably needs a couple more methods to enable piping functionality and redirection.
 
 ```rust
 // shell.jk
@@ -34,15 +34,15 @@ func execute[T](sh: Shell[T]) -> Output {
 
     // some magic to get stdout and stderr
 
-    Output(exit_code: exit_code, stdout: stdout, stderr: stderr)
+    Output(exit_code, stdout, stderr)
 }
 
 // specialization for "cat"
 type Shell[T: "cat"](
+    // missing some options but w/ever
     show_numbers: bool = false,
     show_tabs: bool = false,
     show_ends: bool = false,
-    // missing some options but w/ever
     args: Vector[string] = Vector(),
 );
 
