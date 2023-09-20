@@ -1,4 +1,4 @@
-# Sum types in jinko
+# WU0003: Sum types in jinko
 
 `jinko` has sum types which can be seen as an abstraction over a choice of multiple types at once.
 They are very useful when you are trying to represent data which might exist in multiple states, such as a valid state and an invalid one.

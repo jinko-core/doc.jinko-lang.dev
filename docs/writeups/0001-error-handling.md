@@ -1,4 +1,4 @@
-# Error handling in jinko
+# WU0001: Error handling in jinko
 
 This document should not cover the usage of `Maybe[T]` as that has been previously established.
 
