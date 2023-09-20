@@ -1,13 +1,6 @@
-# docs.jinko.ml
+# doc.jinko-lang.dev
 
 Website for jinko's technical documentation. The website contains documentation for the standard library, a guide to programming in `jinko`, and various blogposts or deep-dives inside jinko's implementation.
-
-# Build the doc
-```console
-$ mkdocs deploy
-```
-
-Follow the [documentation](https://squidfunk.github.io/mkdocs-material/getting-started/) from mkdocs-material to install `mkdocs`
 
 # Deploying the documentation locally
 
