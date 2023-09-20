@@ -1,4 +1,4 @@
-# WU0009: First class modules
+# WU0009: Modules as types
 
 This writeup explores the possibility of removing the `incl <source>` syntax for a more functional approach to "includes" or modules as a whole.
 
