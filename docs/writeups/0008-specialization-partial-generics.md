@@ -1,4 +1,4 @@
-# Specialization, generic application, partial generic application
+# WU0008: Specialization, generic application, partial generic application
 
 Let's consider `jinko`'s memory release mechanism. If the goal is to make copies explicit and moves implicit, one can explicitly ask for a value to be released (and for its memory to be released by the garbage collector)
 using a simple moving function such as this one;

@@ -1,4 +1,4 @@
-# Canonicalization and generics in jinko
+# WU0002: Canonicalization and generics in jinko
 
 ## Rules
 

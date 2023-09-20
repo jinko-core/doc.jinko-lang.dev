@@ -9,7 +9,6 @@ the standard library. A development guide is also included for contributors.
 
 * [Language documentation](language/index.md): How to program in jinko
 * [Standard library](standard-library/index.md): Developer documentation for the standard library
-* [Writeups](writeups/index.md): Blogposts or design documents regarding jinko's implementation
 
 ## Contact
 

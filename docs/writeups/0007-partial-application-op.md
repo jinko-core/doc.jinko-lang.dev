@@ -1,4 +1,4 @@
-# Partial Application operator
+# WU0007: Partial Application operator
 
 ## Concept
 

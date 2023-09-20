@@ -1,4 +1,4 @@
-# Error handling inside jinko's interpreter
+# WU0004: Error handling inside jinko's interpreter
 
 Since we are designing a programming language, we must take particular
 attention in reporting the errors that users are encountering. This means
