@@ -1,4 +1,4 @@
-# WU0012: Calling Rust functions
+# WU0013: Calling Rust functions
 
 ## Syntax experimentation
 
