@@ -1,12 +1,12 @@
 # WU0012: Default field accesses
 
-## Proposal
-
-Introduce a new operator `::` to access a type's default field value
-
 ## Reasoning
 
 The `source` function exposed in WU0009 is more likely to return a new type than an instance of that type, for numerous reasons including module member overriding and simplicity. However, one question remains: how to access the members of a module without first creating an instance of that type?
+
+## Proposal 1
+
+Introduce a new operator `::` to access a type's default field value
 
 ```rust
 type List = source("list");
@@ -94,3 +94,39 @@ type Pair = std^pair^Pair;
 type Pair = std!pair!Pair;
 type Pair = std?pair?Pair;
 ```
+
+## Proposal 2
+
+Create a binding of an instance of the generated type in the enclosing scope of the receiver expression calling `source`
+
+```rust
+type list = source("list");
+
+// becomes
+
+type list(
+  map: func[T, U](Array[T], func(T) -> U) -> Array[U] = /* default map function */)
+);
+
+// binding with default initialization for all fields of the type `list`
+where list = list();
+```
+
+```rust
+func source(path: string) -> type {
+  type new_type = source_inner(path);
+  where receiver = jinko.magic.receiver_expr();
+
+  receiver.scope().insert(
+      jinko.magic.binding(receiver.name(), new_type())
+  );
+
+  new_type
+}
+```
+
+## Issues
+
+1. Very magic
+
+2. Not great for compilation
