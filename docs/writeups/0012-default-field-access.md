@@ -127,6 +127,26 @@ func source(path: string) -> type {
 }
 ```
 
+## Proposal 3
+
+Make the `.` operator access the default value if it is on a type, the field if it is on an instance
+
+```rust
+// list.jk
+type Array[T] = /* ... */;
+func map[T, U](arr: Array[T], f: T -> U) -> Array[U] {
+    /* ... */
+}
+
+type list = source("list");
+list.map([1, 2, 3], x -> x * 2);
+
+// calls <list module>.map(Array[1, 2, 3], x -> x * 2)
+
+where list = list.from([1, 2, 3]); // -> <list module>.Array
+list.map(x -> x * 2); // calls into <list module>.map(list, x -> x * 2)
+```
+
 ## Issues
 
 1. Very magic
