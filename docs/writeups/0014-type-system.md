@@ -101,3 +101,45 @@ func foo[T](value: Maybe[T]) {}
 
 However, this function is only valid when fully monomorphized - meaning that `value` will only ever accept a type of kind `type`.
 
+## Sets
+
+In `jinko`, types can all be represented as sets. According to wikipedia, sets are ["the mathematical model for a collection of different things"](https://en.wikipedia.org/wiki/Set_(mathematics)), so we will call the components of our sets "things".
+
+Thus, in `jinko`, a type is a `Set` of `Thing`s. The notation we will use in the examples is as follows:
+
+1. Each `Thing` will be written as its name: `int`, `Complex`, `float`
+2. Each type will be represented as the set of its things using curly brackets: `{ int, string }`
+
+```rust
+where x /* { int } */ = 15;
+
+where y: string | int /* { string, int } */ =
+  if condition() { x } else { "none" }
+```
+
+We can add a number of rules around sets and things:
+
+1. The type of a binding is always a `Set`, even if it contains only one `Thing`
+
+```rust
+where x = 196.4; // { float }
+
+func foo(
+    a: int, /* { int } */
+    b: bool, /* { bool } */
+) -> char /* { char } */ {
+    'a' /* { char } */
+} /* { func({int}, {bool}) -> {char} } */
+```
+
+2. `switch` expressions are the only ones allowed to explore the `Thing`s within a `Set`
+
+```rust
+where x = int | string | char = '1'; // { int, string, char }
+
+switch x {
+    i: int -> handle_int(i /* { int } */),
+    s: string -> handle_string(s /* { string } */),
+    c: char -> handle_char(c /* { char } */),
+}
+```
