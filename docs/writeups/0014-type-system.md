@@ -125,11 +125,11 @@ We can add a number of rules around sets and things:
 where x = 196.4; // { float }
 
 func foo(
-    a: int, /* { int } */
+    a: int,  /* { int } */
     b: bool, /* { bool } */
-) -> char /* { char } */ {
-    'a' /* { char } */
-} /* { func({int}, {bool}) -> {char} } */
+) -> char    /* { char } */ {
+    'a'      /* { char } */
+}            /* { func({int}, {bool}) -> {char} } */
 ```
 
 2. `switch` expressions are the only ones allowed to explore the `Thing`s within a `Set`
@@ -138,8 +138,8 @@ func foo(
 where x = int | string | char = '1'; // { int, string, char }
 
 switch x {
-    i: int -> handle_int(i /* { int } */),
+    i: int -> handle_int(i       /* { int } */),
     s: string -> handle_string(s /* { string } */),
-    c: char -> handle_char(c /* { char } */),
+    c: char -> handle_char(c     /* { char } */),
 }
 ```
