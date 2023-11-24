@@ -143,3 +143,51 @@ switch x {
     c: char -> handle_char(c     /* { char } */),
 }
 ```
+
+## An interpreter of type variables
+
+### Type widening
+
+Process of replacing the type of a variable with a sum type containing its original type.
+
+e.g. for a variable of type `A | B | C`, assign it the type `A | B | C | D | E`.
+
+In set terms: we are replacing a given set `E`, by a set `F` containing all the elements of `E` and one or more elements.
+
+```rust
+func foo(
+  a: int | string // :: type { int, string }
+) {}
+
+foo(15); // 15 :: type { int }
+foo("jinko"); // "15" :: type { string }
+```
+
+Both the expressions above are correct and typecheck properly. In both cases, the value given to `foo` will see its type "widened" to the type of `a`: `int | string`. Type widening does not occur if the expression is already of the expected type, etc:
+
+```rust
+where x: int | string = // :: type { int, string }
+    if condition() {
+        15 // :: type { int }
+    } else {
+        "jinko" // :: type { string }
+    };
+
+foo(x); // x :: type { int, string }
+```
+
+In the last call to `foo`, no widening needs to happen - both the set of `x` and the set of `a` are already equal to one another.
+
+### Type narrowing, or flow-sensitive typing
+
+Flow-sensitive typing is the process of "narrowing down" (as opposed to "type widening") the sum type of an expression to one variant of that sum type.
+
+e.g. for a variable of type `A | B | C | D`, allow narrowing it down to a variable of type `A`, OR one variable of type `B`, OR one variable of type `C | D`.
+
+_Flow-sensitive typing can only happen in switch expressions_.
+
+This is an important distinction from other languages with flow-sensitive typing. `jinko` does not allow flow-typing in `if-else` expressions, and all flow-typing must be exhaustive.
+
+Reduce a given set `E` of `n` elements to `n` or less sets containing possibly only one element.
+
+### Set expansion
