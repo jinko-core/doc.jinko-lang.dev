@@ -366,3 +366,86 @@ func fold[In, Out, Elt](
     output
 }
 ```
+
+## Specializing functions only in the current context
+
+Specialization should only be possible for functions which live in the current namespace/are refered to by their full names. This will avoid a lot of complications with name conflicts, and user defined methods with similar names as library/core ones.
+
+Let's take the example of the `fmt` function, defined in `core` as follows:
+
+```rust
+func fmt[T](value: T) -> string { /* ... */ }
+```
+
+Now let's specialize it for our custom type `Foo`:
+
+```rust
+type Foo;
+
+func fmt[T: Foo](f: Foo) -> string { "Foo" }
+```
+
+This should error out, because we are specializing a function whose generic definition does not exist - the generic `fmt` is not present in the current namespace/definition pool.
+
+We can circumvent that by using its full name, or importing `fmt` into the definition pool:
+
+```rust
+type Foo;
+
+func core.fmt[T: Foo](f: Foo) -> string { "Foo" }
+
+// or
+
+where fmt = core.fmt;
+
+type Foo;
+
+func fmt[T: Foo](f: Foo) -> string { "Foo" }
+```
+
+
+NOTE: How to output that error? Super confusing if the user just expects `fmt` to exist to see something like `fmt does not exist`.
+
+## Specialization as pattern matching extension?
+
+Specialization can be thought of as adding a new case to a generic pattern, e.g.:
+
+```rust
+func fmt[T](x: T) -> string {
+    jinko.error("unimplemented function `fmt` for type `{any_type}`")
+}
+```
+
+is almost the same as:
+
+```rust
+where fmt = x -> switch x {
+    any_type: _ -> jinko.error("unimplemented function `fmt` for type `{any_type}`"),
+}
+```
+
+So if we had a syntax for "extending" that pattern with new cases/match arms, then it could make sense:
+
+```rust
+// add an implementation of `fmt` for strings
+fmt += s: string -> s;
+
+// for ints and chars
+fmt += i: int -> core.int.int_to_str(i);
+fmt += c: char -> core.string.string_from_char(c);
+
+// for a custom type
+fmt += f: Foo -> "Foo";
+```
+
+But how to have a syntax that makes sense here?
+
+```rust
+func fmt[T](value: T) -> string {
+    jinko.error("unimplemented function `fmt` for type `{any_type}`")
+}
+
+fmt :: i: int -> core.int.int_to_str(i);
+fmt :: s: string -> s;
+fmt :: Foo -> "Foo";
+```
