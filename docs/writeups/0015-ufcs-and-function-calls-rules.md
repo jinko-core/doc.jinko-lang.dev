@@ -165,6 +165,14 @@ where psquared = pair.map(p2, x -> x * x);
   1. How do we restrict this so that it creates no ambiguities and makes sense?
   2. What if it resolves to a binding's field instead? that must make for some pretty confusing errors
 
+The TL;DR is as follows:
+
+Allow UFCS to desugar `x.foo()` to `foo(x)` OR `_.foo(x)`
+
+with `_` being any binding or type in the current namespace.
+
+In the case of an ambiguity, emit a hard error.
+
 ## Drawbacks
 
 1. Resolving to a binding's field instead of a module function
