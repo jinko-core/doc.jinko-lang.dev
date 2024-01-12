@@ -151,7 +151,7 @@ type list = source["list"];
 // no re-exports
 
 where p = pair.pair(1, 2); // Pair(1, 2)
-where p2 = pair.map(p ,x -> x * 2); // Pair(2, 4)
+where p2 = pair.map(p, x -> x * 2); // Pair(2, 4)
 
 where l = list.map([1, 2, 3], x -> x * 2);
 
@@ -191,3 +191,21 @@ If we do allow resolving to binding's fields and type fields and functions that 
 - `random_binding.add`, which is actually the `sub` function.
 
 What to do in that case? What can the user do? We can definitely error on ambiguities, but surely this would incur complexity for users.
+
+## Proposed solution 2
+
+Skip UFCS and instead introduce a piping operator.
+
+```rust
+type pair = source["pair"];
+type list = source["list"];
+
+where p = 1 |> pair.pair(2);
+where p2 = p |> pair.map(x -> x *2);
+
+where l = [1, 2, 3] |> list.map(x -> x * 2);
+
+where psquared = p2 |> pair.map(x -> x * x)
+```
+
+This syntax is however very heavy for what should be a small typed scripting language.
