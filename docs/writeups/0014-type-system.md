@@ -44,63 +44,6 @@ We will say that `Point[T]` has kind `type -> type`.
 Even more complicated: `jinko`'s module system creates a new `type` out of the path of a module, encoded as a string. Out of a `string`, create a new `type`. This has kind `string -> type`.
 If we imagine a "thing" which requires an integer and a type to return a new type, then that "thing" would be of kind `(int, type) -> type`.
 
-## Creating types
-
-With this knowledge in mind, `jinko`'s type system can be thought of as an interpreter which only deals with kinds and which has no side-effects. All of the execution and logic happens during type-checking.
-In that system, a concrete type of kind `type` can be thought of as a regular immutable variable/binding. A type constructor of kind `type -> type` can be thought of as a regular function.
-
-In the following code examples, comments will be added around the various types to show the kinds we are dealing with:
-
-```rust
-type Foo; // :: type
-
-type Foo[T]; // :: type -> type
-```
-
-There are two different types in `jinko`: sum types and record types. Sum types are made of multiple possible types but instances of a sum type are only ever *one* type. Record types on the other hand, are a product type: they contain multiple instances of possibly multiple types.
-
-```rust
-type Foo;
-type Bar(a: int, b: Foo);
-```
-
-In the above example, `Foo` is a record type with no data fields. `Bar` is a record type with two fields: `a`, of type `int`, and `b`, of type `Foo`.
-
-```rust
-func foo(a: int | bool | char) {}
-```
-
-Here on the other hand, the argument `a` is of the sum type `int | bool | char`. `a` will be either an integer, a boolean or a character. Let's add the kinds to these two examples:
-
-```rust
-type Foo; // :: type
-type Bar(
-  a: int, // :: type
-  b: Foo, // :: type
-); // :: type
-
-func foo(
-  a: int | bool | char // :: type
-) {}
-```
-
-We can extract a few things from these examples. The `type` keyword can be used to create new types, of kind `type` - new, fully fledged types. We can also use it to create type aliases:
-
-```rust
-type Foo; // :: type
-type Bar = Foo; // :: type
-```
-
-This is similar to creating two "variables" in a regular piece of code. One is named `Foo`, and the other, `Bar`, refers to `Foo`. `Bar` is a type alias of `Foo` - not a new type. Anywhere `Foo` is used, `Bar` could be used, and vice-versa.
-
-Another concept we introduce in the above example is that function arguments can be typed with values of kind `type`. It is not possible for a function argument to be of kind `type -> type`, or other type constructors. This is an important concept, as one could think tihs is not the case with the following example:
-
-```rust
-func foo[T](value: Maybe[T]) {}
-```
-
-However, this function is only valid when fully monomorphized - meaning that `value` will only ever accept a type of kind `type`.
-
 ## Sets
 
 In `jinko`, types can all be represented as sets. According to wikipedia, sets are ["the mathematical model for a collection of different things"](https://en.wikipedia.org/wiki/Set_(mathematics)), so we will call the components of our sets "things".
@@ -125,11 +68,12 @@ We can add a number of rules around sets and things:
 where x = 196.4; // { float }
 
 func foo(
-    a: int,  /* { int } */
-    b: bool, /* { bool } */
-) -> char    /* { char } */ {
-    'a'      /* { char } */
-}            /* { func({int}, {bool}) -> {char} } */
+    a: int,  // { int }
+    b: bool, // { bool }
+) -> char    // { char }
+{
+    'a'      // { char }
+}            // { func({int}, {bool}) -> {char} }
 ```
 
 2. `switch` expressions are the only ones allowed to explore the `Thing`s within a `Set`
@@ -143,3 +87,91 @@ switch x {
     c: char -> handle_char(c     /* { char } */),
 }
 ```
+
+## Creating types
+
+With this knowledge in mind, `jinko`'s type system can be thought of as an interpreter which only deals with kinds and which has no side-effects. Its goal is to ensure that different `Set`s are compatible with each other, otherwise it will output an error. All of the execution and logic happens during type-checking.
+In that system, a concrete type of kind `type` can be thought of as a regular immutable variable/binding. A type constructor of kind `type -> type` can be thought of as a regular function.
+
+In the following code examples, comments will be added around the various types to show the kinds we are dealing with:
+
+```rust
+type Foo; // :: type
+
+type Foo[T]; // :: type -> type
+```
+
+Which we can combine with `Set` information
+
+```rust
+type Foo; // :: type { Foo }
+
+type Foo[T]; // :: type -> type
+```
+
+You can note that type constructors *are not `Set`s*. Meaning that the typechecker will not perform any checking on type constructors, but only on types of kind `type`. Meaning that generic types and generic functions must be monomorphized fully for the typechecker to reason about them.
+
+To apply one of the points above, the first `Foo` type is similar to a binding, while the second one can be though of as a "function" which will produce a binding when called (monormorphized).
+
+## Two types of types
+
+There are two different types in `jinko`: sum types and record types. Sum types are made of multiple possible types but instances of a sum type are only ever *one* type. Record types on the other hand, are a product type: they contain multiple instances of possibly multiple types.
+
+```rust
+type Foo;
+type Bar(a: int, b: Foo);
+```
+
+In the above example, `Foo` is a record type with no data fields. `Bar` is a record type with two fields: `a`, of type `int`, and `b`, of type `Foo`.
+
+```rust
+func foo(a: int | bool | char) {}
+```
+
+Here on the other hand, the argument `a` is of the sum type `int | bool | char`. `a` will be either an integer, a boolean or a character. Let's add extra info to these examples:
+
+```rust
+type Foo; // :: type { Foo }
+type Bar(
+  a: int, // :: type { int }
+  b: Foo, // :: type { Foo }
+); // :: type { Bar }
+
+func foo(
+  a: int | bool | char // type { int, bool, char }
+) {}
+```
+
+We can extract a few things from these examples. The `type` keyword can be used to create new types, of kind `type` - new, fully fledged types. We can also use it to create type aliases:
+
+```rust
+type Foo; // :: type
+type Bar = Foo; // :: type
+```
+
+This is similar to creating two "variables" in a regular piece of code. One is named `Foo`, and the other, `Bar`, refers to `Foo`. `Bar` is a type alias of `Foo` - not a new type. Anywhere `Foo` is used, `Bar` could be used, and vice-versa.
+
+Another concept we introduce in the above example is that function arguments can be typed with values of kind `type`. It is not possible for a function argument to be of kind `type -> type`, or other type constructors. This is an important concept, as one could think this is not the case with the following example:
+
+```rust
+func foo[T](value: Maybe[T]) {}
+```
+
+However, as we said above, the typechecker can only reason about this function when fully monomorphized - meaning that `value` will only ever accept a type of kind `type`. At the moment, `foo` is a function constructor.
+
+Furthermore, we can also alias sum types:
+
+```rust
+type FooOrBar = Foo | Bar; // :: type { Foo, Bar }
+```
+
+And store sum types in record types:
+
+```rust
+type Record(
+    i_or_s: int | string // :: type { int, string }
+); // :: type { Record }
+
+```
+
+Let's pause here and have a look at one of the major differences between record types and sum types. You'll note that the `Set` of `Record` is `{ Record }`. It does not matter that `Record` has a field with a type of `int | string`. We cannot "implicitly" convert a value of type `int | string` into a value of type `Record`. On the other hand, `FooOrBar` has type `Foo | Bar`. 
