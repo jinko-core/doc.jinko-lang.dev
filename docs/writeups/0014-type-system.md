@@ -191,3 +191,88 @@ This is an important distinction from other languages with flow-sensitive typing
 Reduce a given set `E` of `n` elements to `n` or less sets containing possibly only one element.
 
 ### Set expansion
+
+### Representation of type variables
+
+Type variables need to be represented in a way that is simple to understand, and simple to reason about. The easiest way is to represent them as a set of type nodes - basically a set of indexes into the `Fir`.
+This works well for simple types, but completely falls apart for our "magic"
+builtin primitive union types: `int`, `char` and `string`. While it is possible
+to represent them as sets of all possible integer, character and string
+literals, it does not make sense to do so and will certainly incur a heavy
+compilation penalty. We can then think about representing our type variables like this:
+
+```rust
+enum Type {
+    /// A primitive union type: int, char or string. The index corresponds to the definition of
+    /// that type in the standard library.
+    PrimitiveUnion(OriginIdx),
+    /// A "regular" type. The index corresponds to the definition, and the typeset to the set of 
+    /// types represented by that definition.
+    Set(OriginIdx, TypeSet),
+}
+```
+
+For our subtyping rules, we can simply check if a given typeset is contained in the expected typeset. But this does not work for primitive type unions: We do not know in advance the indexes of all constants used in a program, and cannot easily know if a constant's type index is present in a union's type index: Let's look at this with the following program.
+
+```rust
+type char;
+type int;
+type string;
+
+where x = 15;
+```
+
+Since `x` will be of type `15`, it's as if we had an extra type declaration in the program:
+
+
+```rust
+type char;
+type int;
+type string;
+
+type 15;
+
+where x = 15;
+```
+
+Now let's add type variables to all our expressions. Remember that a record type will show up as a typeset of one member, itself.
+
+```rust
+// Type::PrimitiveUnion(1)
+type char;
+// Type::PrimitiveUnion(2)
+type int;
+// Type::PrimitiveUnion(3)
+type string;
+
+// Type::Set(4, { 4 });
+type 15;
+
+// Type::Set(4, { 4 }) // same type as `type 15`
+where x = 15;
+```
+
+There is absolutely zero link between the type of the constant `15` and the union type `int`. Checking if the set of `15` fits within the set of `int` does not make sense, since the set of `int` is empty.
+
+There are multiple ways to solve this problem:
+
+1. When doing typeset comparisons, fetch node information from the `Fir`. This allows us to look at a node's AST data, and to check if it is an `int` constant or not - if that is the case, then that node can be widened to a node of type `int`.
+2. When typing constant nodes, add extra information regarding the primitive type they could widen to. Basically storing something like `Type::ConstantSet(4, can_widen_to: "int")` in the above example. This works but is delicate, spaghetti, and causes us to add an extra variant to our enum
+3. Collect a list of all the constants in a program in order to actually create a primitive type that is a proper union type. This would allow us to *remove* a variant from our enum, as `int` would simply become a union type with an actual type set.
+
+```rust
+// Type::Set(1, {})
+type char;
+// Type::Set(2, { 4 })
+type int;
+// Type::Set(3, {})
+type string;
+
+// Type::Set(4, { 4 });
+type 15;
+
+// Type::Set(4, { 4 }) // same type as `type 15`
+where x = 15;
+```
+
+This would work and also be quite simple to implement.
